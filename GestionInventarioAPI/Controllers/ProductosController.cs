@@ -43,22 +43,19 @@ namespace GestionInventarioAPI.Controllers
             return Ok(producto);
         }
 
-        // POST api/<ProductosController>
+        /// <summary>
+        /// crea un nuevo producto
+        /// </summary>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public ActionResult<Producto> Post([FromBody] Producto nuevoProducto)
         {
-        }
+            // Generamos un ID simple basado en el ultimo
+            nuevoProducto.Id = productos.Max(p => p.Id) + 1;
 
-        // PUT api/<ProductosController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+            productos.Add(nuevoProducto);
 
-        // DELETE api/<ProductosController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            // Retornar el recurso creado y la ruta donde encontrarlo (status 201)
+            return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto);
         }
     }
 }
