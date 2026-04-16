@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using GestionInventarioAPI.Models; // Importamos nuestro modelo de producto
+using GestionInventarioAPI.Models;
+using System.Diagnostics.CodeAnalysis;
+using GestionInventarioAPI.Data;
+using Microsoft.EntityFrameworkCore;// Importamos nuestro modelo de producto
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -9,21 +12,23 @@ namespace GestionInventarioAPI.Controllers
     [ApiController]
     public class ProductosController : ControllerBase
     {
-        //creamos una lista estatica para simular una base de datos por ahora
-        private static List<Producto> productos = new List<Producto>
-        {
-            new Producto { Id = 1, Nombre = "Laptop Gamer", Precio = 1200, Stock = 5 },
-            new Producto { Id = 2, Nombre = "mause Óptico", Precio = 25, Stock = 50 }
-        };
+        private readonly ApplicationDbContext _context; // Inyectamos el contexto de la base de datos
 
+        // El constructor recibe el contexto de la base de datos
+        public ProductosController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
         /// <summary>
-        ///    obtiene la lista completa de productos
+        // A Partir de aqui usaremos _context.productos para todo
         /// </summary>
+
+
         // GET: api/<ProductosController>
         [HttpGet]
-        public ActionResult<IEnumerable<Producto>> Get()
+        public async Task<ActionResult<IEnumerable<Producto>>> Get()
         {
-            return Ok(productos); // Devuelve la lista de productos con un código 200 OK
+            return await _context.Productos.ToListAsync(); // Obtenemos todos los productos de la base de datos de forma asincrona
         }
 
         /// <summary>
@@ -32,9 +37,9 @@ namespace GestionInventarioAPI.Controllers
 
         // GET api/<ProductosController>/5
         [HttpGet("{id}")]
-        public ActionResult<Producto> Get (int id)
+        public async Task<ActionResult<Producto>> Get(int id)
         {
-            var producto = productos.FirstOrDefault(p => p.Id == id); // Busca el producto por ID
+            var producto = await _context.Productos.FindAsync(id); // Busca el producto por ID de forma asincrona
 
             if (producto == null)
             {
@@ -47,15 +52,39 @@ namespace GestionInventarioAPI.Controllers
         /// crea un nuevo producto
         /// </summary>
         [HttpPost]
-        public ActionResult<Producto> Post([FromBody] Producto nuevoProducto)
+        public async Task<ActionResult<Producto>> Post([FromBody] Producto nuevoProducto)
         {
-            // Generamos un ID simple basado en el ultimo
-            nuevoProducto.Id = productos.Max(p => p.Id) + 1;
+            _context.Productos.Add(nuevoProducto); // Agregamos el nuevo producto a la base de datos
+            await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona y se guarda fisicamente en Inventario.db
 
-            productos.Add(nuevoProducto);
+            return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto); // Retornar el recurso creado y la ruta donde encontrarlo (status 201)
+        }   
 
-            // Retornar el recurso creado y la ruta donde encontrarlo (status 201)
-            return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto);
+        [HttpPut("{id}")]
+        public async  Task<IActionResult> Put(int id, [FromBody] Producto productoActualizado)
+        {
+            var productoDB = await _context.Productos.FindAsync(id); // Busca el producto por ID de forma asincrona
+            if (productoDB == null) return NotFound(); // retorna un código 404 Not Found si el producto no existe, para avisar al usuario
+
+            // Actualizamos las propiedades del producto existente
+            productoDB.Nombre = productoActualizado.Nombre;
+            productoDB.Precio = productoActualizado.Precio;
+            productoDB.Stock = productoActualizado.Stock;
+            await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
+            return NoContent(); // Retorna un código 204 No Content para indicar que la actualización fue exitosa
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id)
+        { 
+            var productoDB = await _context.Productos.FindAsync(id); // Busca el producto por ID de forma asincrona
+            if (productoDB == null) return NotFound(); // Si no existe, avisamos al usuario (Error 404)
+
+            _context.Productos.Remove(productoDB);
+            await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
+            return NoContent(); // Retorna un código 204 No Content para indicar que la eliminación fue exitosa
+        }
+
+
     }
 }
