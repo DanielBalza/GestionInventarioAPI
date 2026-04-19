@@ -9,5 +9,7 @@ namespace GestionInventarioAPI.Data
 
         // Esta linea le dice a EF que cree una tabla llamada "productos"
         public DbSet<Producto> Productos { get; set; }
+        // Esta linea le dice a EF que cree una tabla llamada "categorias"
+        public DbSet<Categoria> Categorias { get; set; }
     }
 }

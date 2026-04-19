@@ -17,5 +17,12 @@ namespace GestionInventarioAPI.Models
 
         [Range(0, 1000, ErrorMessage = "El stock no puede ser negativo")]
         public int Stock { get; set; }
+
+
+        // clave foranea para relacionar el producto con su categoria
+        public int CategoriaId { get; set; }
+
+        // propiedad de navegacion para acceder a los datos de la categoria a la que pertenece el producto
+        public Categoria? Categoria { get; set; }
     }
 }
