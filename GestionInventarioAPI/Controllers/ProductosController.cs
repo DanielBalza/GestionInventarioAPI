@@ -2,7 +2,8 @@
 using GestionInventarioAPI.Models;
 using System.Diagnostics.CodeAnalysis;
 using GestionInventarioAPI.Data;
-using Microsoft.EntityFrameworkCore;// Importamos nuestro modelo de producto
+using Microsoft.EntityFrameworkCore;
+using GestionInventarioAPI.DTOs;// Importamos nuestro modelo de producto
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -28,7 +29,7 @@ namespace GestionInventarioAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Producto>>> Get()
         {
-            return await _context.Productos.ToListAsync(); // Obtenemos todos los productos de la base de datos de forma asincrona
+            return await _context.Productos.Include(p => p.Categoria).ToListAsync(); // Obtenemos todos los productos de la base de datos de forma asincrona
         }
 
         /// <summary>
@@ -52,13 +53,21 @@ namespace GestionInventarioAPI.Controllers
         /// crea un nuevo producto
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<Producto>> Post([FromBody] Producto nuevoProducto)
+        public async Task<ActionResult<Producto>> Post([FromBody] ProductoDTO ProductoDto)
         {
-            _context.Productos.Add(nuevoProducto); // Agregamos el nuevo producto a la base de datos
-            await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona y se guarda fisicamente en Inventario.db
+            //Convertimos el DTO a una entidad Producto
+            var nuevoProducto = new Producto
+            {
+                Nombre = ProductoDto.Nombre,
+                Precio = ProductoDto.Precio,
+                Stock = ProductoDto.Stock,
+                CategoriaId = ProductoDto.CategoriaId
+            };
+            _context.Productos.Add(nuevoProducto);
+            await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
 
-            return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto); // Retornar el recurso creado y la ruta donde encontrarlo (status 201)
-        }   
+            return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto);
+        }
 
         [HttpPut("{id}")]
         public async  Task<IActionResult> Put(int id, [FromBody] Producto productoActualizado)
