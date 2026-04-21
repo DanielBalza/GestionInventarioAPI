@@ -55,7 +55,13 @@ namespace GestionInventarioAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Producto>> Post([FromBody] ProductoDTO ProductoDto)
         {
-            //Convertimos el DTO a una entidad Producto
+            // Esta linea es le "guardia de seguridad"
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); // si el modelo no es valido, devolvemos un error 400 Bad Request con los detalles del error
+            }
+
+             //Convertimos el DTO a una entidad Producto
             var nuevoProducto = new Producto
             {
                 Nombre = ProductoDto.Nombre,
