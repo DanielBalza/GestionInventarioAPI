@@ -13,7 +13,6 @@ namespace GestionInventarioAPI.Controllers
     [ApiController]
     public class ProductosController : ControllerBase
     {
-        private readonly ApplicationDbContext _context; // Inyectamos el contexto de la base de datos
 
         // El constructor recibe el contexto de la base de datos
         public ProductosController(ApplicationDbContext context)
@@ -99,7 +98,6 @@ namespace GestionInventarioAPI.Controllers
             await _context.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
             return NoContent(); // Retorna un código 204 No Content para indicar que la eliminación fue exitosa
         }
-
 
     }
 }
