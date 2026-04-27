@@ -1,4 +1,5 @@
 using GestionInventarioAPI.Data;
+using GestionInventarioAPI.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=Inventario.db"));
-
+builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 var app = builder.Build();
 app.UseMiddleware<GestionInventarioAPI.Middleware.ExceptionMiddleware>();
 
