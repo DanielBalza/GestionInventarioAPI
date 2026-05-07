@@ -4,7 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using GestionInventarioAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using GestionInventarioAPI.DTOs;
-using GestionInventarioAPI.Repositories;// Importamos nuestro modelo de producto
+using GestionInventarioAPI.Repositories;
+using GestionInventarioAPI.Services;// Importamos nuestro modelo de producto
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,12 +17,12 @@ namespace GestionInventarioAPI.Controllers
     {
 
 
-        private readonly IProductoRepository _repository; // Inyectamos el contexto de la base de datos
+        private readonly IServicioProducto _repository; // Inyectamos el contexto de la base de datos
 
         // El constructor recibe el contexto de la base de datos
-        public ProductosController(IProductoRepository repository)
+        public ProductosController(IServicioProducto servicioProducto)
         {
-            _repository = repository;
+            _repository = servicioProducto;
         }
         /// <summary>
         // A Partir de aqui usaremos _context.productos para todo
@@ -32,7 +33,7 @@ namespace GestionInventarioAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Producto>>> Get()
         {
-            var productos = await _repository.GetAllAsync();
+            var productos = await _repository.ObtenerTodosAsync();
             return Ok(productos);// Obtenemos todos los productos de la base de datos de forma asincrona
         }
 
@@ -44,7 +45,7 @@ namespace GestionInventarioAPI.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Producto>> Get(int id)
         {
-            var producto = await _repository.GetByIdAsync(id); // Busca el producto por ID de forma asincrona
+            var producto = await _repository.ObtenerPorIdAsync(id); // Busca el producto por ID de forma asincrona
 
             if (producto == null)
             {
@@ -73,34 +74,32 @@ namespace GestionInventarioAPI.Controllers
                 Stock = ProductoDto.Stock,
                 CategoriaId = ProductoDto.CategoriaId
             };
-            await _repository.AddAsync(nuevoProducto);
-            await _repository.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
+            await _repository.CrearProductoAsync(ProductoDto);
 
             return CreatedAtAction(nameof(Get), new { id = nuevoProducto.Id }, nuevoProducto);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] Producto productoActualizado)
+        public async Task<IActionResult> Put(int id, [FromBody] ProductoDTO productoActualizado)
         {
-            var productoDB = await _repository.GetByIdAsync(id); // Busca el producto por ID de forma asincrona
+            var productoDB = await _repository.ObtenerPorIdAsync(id); // Busca el producto por ID de forma asincrona
             if (productoDB == null) return NotFound(); // retorna un código 404 Not Found si el producto no existe, para avisar al usuario
 
             // Actualizamos las propiedades del producto existente
             productoDB.Nombre = productoActualizado.Nombre;
             productoDB.Precio = productoActualizado.Precio;
             productoDB.Stock = productoActualizado.Stock;
-            await _repository.UpdateAsync(productoDB); // Guardamos los cambios de forma asincrona
+            await _repository.ActualizarProductoAsync(id,productoActualizado); // Guardamos los cambios de forma asincrona
             return NoContent(); // Retorna un código 204 No Content para indicar que la actualización fue exitosa
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var productoDB = await _repository.GetByIdAsync(id); // Busca el producto por ID de forma asincrona
+            var productoDB = await _repository.ObtenerPorIdAsync(id); // Busca el producto por ID de forma asincrona
             if (productoDB == null) return NotFound(); // Si no existe, avisamos al usuario (Error 404)
             
-            await _repository.DeleteAsync(productoDB); // Eliminamos el producto de forma asincrona
-            await _repository.SaveChangesAsync(); // Guardamos los cambios de forma asincrona
+            await _repository.EliminarProductoAsync(id); // Eliminamos el producto de forma asincrona
             return NoContent(); // Retorna un código 204 No Content para indicar que la eliminación fue exitosa
         }
 
