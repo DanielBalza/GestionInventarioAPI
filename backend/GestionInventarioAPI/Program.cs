@@ -14,7 +14,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite("Data Source=Inventario.db"));
 builder.Services.AddScoped<IProductoRepository, ProductoRepository>();
 builder.Services.AddScoped<IServicioProducto, ServicioProducto>();
-var app = builder.Build();
+builder.Services.AddCors(options =>
+   { options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // URL por defecto de Vite
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
+    var app = builder.Build();
 app.UseMiddleware<GestionInventarioAPI.Middleware.ExceptionMiddleware>();
 
 // Configure the HTTP request pipeline.
@@ -25,6 +33,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("AllowReactApp");
 
 app.UseAuthorization();
 
